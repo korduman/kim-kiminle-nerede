@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kim Kiminle Nerede Ne Yapıyor?</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+        }
+        .question-box {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: calc(100% - 18px);
+            margin-top: 10px;
+        }
+        #result-area {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #ffe0b2; /* Açık turuncu */
+            border-radius: 8px;
+            text-align: center;
+        }
+        #result-text {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e65100; /* Koyu turuncu */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kim Kiminle Nerede Ne Yapıyor?</h1>
+
+    <div id="game-area">
+        </div>
+
+    <div id="result-area" style="display: none;">
+        <h2>🎉 İşte Olay Zinciri! 🎉</h2>
+        <p id="result-text"></p>
+        <button onclick="window.location.reload();">Yeniden Oyna</button>
+    </div>
+</div>
+
+<script>
+// --- VERİ TABANI (Sizin Sağladığınız Veriler) ---
+const veri_tabani = {
+    // KİM / KİMİNLE LİSTELERİ
+    'Rahmetli': ['Fatih Sultan Mehmet', 'Enver Paşa', 'Ayşen Gruda', 'Kemal Sunal', 'Münir Özkul', 'Adile Naşit', 'Pablo Escobar', 'Marilyn Monroe', 'Prenses Diana', 'II. Abdülhamid', 'Hezarfen Ahmet Çelebi', 'Kabaağaçlızade Şakir Paşa', 'Sadri Alışık', 'Tuncel Kurtiz', 'Hulusi Kentmen', 'Müşfik Kenter', 'Muhsin Ertuğrul', 'Nejat Uygur', 'Hazreti Ali', 'Alfred Hitchcock', 'Charlie Chaplin', 'Mozart', 'William Wallace', 'Mevlana', 'Jül Sezar', 'Devlet Bahçeli'],
+    'Hayali': ['Harry Potter', 'Keloğlan', 'Gandalf', 'Polat Alemdar', 'Hannibal Lecter', 'Aslan Kral', 'Wall-E', 'Noel Baba', 'Homer Simpson', 'Batman', 'Altıncı His’teki oğlan', 'Kill Bill’deki Gelin', 'Kayıp Balık Nemo', 'V', 'Totoro', 'Örümcek Adam', 'Sherlock Holmes', 'Rocky Balboa', 'Kaptan Jack Sparrow', 'Terminatör', 'Mike Wazowski', 'Tony Soprano', 'Walter White', 'Luke Skywalker', 'Amelie', 'Barbie'],
+    'Yerli': ['Bülent Ersoy', 'Nuri Bilge Ceylan', 'Tarkan', 'Acun', 'Hande Erçel', 'Hadise', 'Serenay Sarıkaya', 'Ekrem İmamoğlu', 'Kıvanç Tatlıtuğ', 'Feyyaz Yiğit', 'Demet Akalın', 'İrem Derici', 'Merve Dizdar', 'Gülben Ergen', 'Demet Evgar', 'Hülya Avşar', 'Berat Albayrak', 'RTE', 'Ata Demirer', 'Özcan Deniz', 'Mehmet Aslantuğ', 'Haluk Bilginer', 'Ufuk Bayraktar', 'Tamer Karadağlı', 'İlyas Salman', 'Fikret Kuşkan', 'Barış Atay', 'Erdal Beşikçioğlu'],
+    'Yabancı': ['Donald Trump', 'Kim Kardashian', 'George Clooney', 'Taylor Swift', 'Brad Pitt', 'Putin', 'Elon Musk', 'Scarlett Johansson', 'Lady Gaga', 'Tom Hanks', 'Miyazaki', 'Jeff Bezos', 'Bill Gates', 'Mark Zuckerberg', 'Sibel Kekilli', 'Tarantino', 'Zohran Mamdani', 'Jennifer Lopez', 'Vahdettin’in torunu', 'ünlü bir futbolcu', 'senin tanımadığın biri', 'eski sevgilin', 'uzaktan bir akraban'],
+    
+    // NEREDE LİSTELERİ
+    'Nerede_Buyuk': ['Yozgat’ın bir köyünde', 'Müge Anlı’nın stüdyosunda', 'Paris metrosunda', 'Beyaz Saray’da', 'Uluslararası Uzay İstasyonu’nda', 'Ak Saray’da', 'Boğaz köprüsünde', 'Avrasya tünelinde', 'RTE’nin uçağında', 'Çin’de', 'Japonya’da', 'Sahra Çölü’nde', 'Titanik gemisinde', 'Kanarya Adalarında', 'Suudi Arabistan konsolosluğunda', 'Hindistan’da', 'Mısır’da', 'Güney Afrika’da', 'Avustralya’da', 'Bangkok’ta', 'Kamboçya’da', 'Amsterdam’da', 'Dubai’de'],
+    'Nerede_Kucuk': ['tuvalette', 'AVM’de', 'asansörde', 'parkta', 'hastanede', 'sizin evde', 'tek kişilik yatakta', 'karanlık bir sokakta', 'mahalle berberinde', 'dünyanın öbür ucunda', 'barda', 'otel odasında', 'bilinmeyen bir yerde', 'okul mezuniyetinde', 'kilisede', 'buradan çok uzakta', 'uzak bir galakside', 'balkonda', 'yan dairede', 'arabada', 'kamyon kasasında', 'vapurda', '2 metre önümüzde'],
+    
+    // NE YAPTI (EYLEM & ZAMAN) LİSTELERİ
+    'Ne_Yapti_Eylem': ['halay çekti', 'voleybol oynadı', 'lahmacun yedi', 'birlikte film izledi', 'düet yaptı', 'el ele tutuştu', 'saklambaç oynadı', 'film çekti', 'evcilik oynadı', 'kan kardeşi oldu', 'vals yaptı', 'evlenmeye karar verdi', 'tekme tokat kavga etti', 'birbirinin poposunu kaşıdı', 'parti kurdu', 'ayakta alkışlandı', 'en uzağa tükürme yarışı yaptı', 'ortak şirket açtı', 'çiçekleri suladı', 'ağız dalaşına girdi', 'selfie çekti', 'Tiktok videosu çekti', 'Kim Kiminle Nerede oynadı', 'kadeh tokuşturdu', 'lokma döktürdü', 'aynı sigarayı paylaştı', 'boy ölçüştü'],
+    'Ne_Yapti_Zaman': ['dün gece', 'geçen sene', '2017 yazında', 'pandemi zamanı', 'yılbaşı gecesi', 'geçen hafta', 'senin doğum gününde', 'kim bilir ne zaman', 'dün değil önceki gün', 'sen uyurken', 'gece rüyamda', 'kurban bayramında', '23 Nisan’da'],
+    
+    // NE YAPAR (EYLEM & ZAMAN) LİSTELERİ
+    'Ne_Yapar_Eylem': ['halay çeker', 'voleybol oynar', 'lahmacun yer', 'birlikte film izler', 'düet yapar', 'el ele tutuşur', 'saklambaç oynar', 'film çeker', 'evcilik oynar', 'kan kardeşi olur', 'vals yapar', 'evlenmeye karar verir', 'tekme tokat kavga eder', 'birbirinin poposunu kaşır', 'parti kurar', 'ayakta alkışlanır', 'en uzağa tükürme yarışı yapar', 'ortak şirket açar', 'çiçekleri sular', 'ağız dalaşına girer', 'selfie çeker', 'Tiktok videosu çeker', 'Kim Kiminle Nerede oynar', 'kadeh tokuşturur', 'lokma döktürür', 'aynı sigarayı paylaşır', 'boy ölçüşür'],
+    'Ne_Yapar_Zaman': ['her pazar', 'aklına estikçe', 'üç vakte kadar', 'bugün yarın', 'canları sıkıldıkça', 'zaman zaman', 'her sene', 'ileride bir gün', 'sana ne zaman uygunsa', 'sen istersen', 'ilk fırsatta', 'her gece', 'gerekirse', 'karınları acıkınca']
+};
+
+const oyun_state = {
+    step: 1,
+    kim: null,
+    kiminle: null,
+    nerede: null,
+    ne_yapiyor: null,
+    ne_zaman: null
+};
+
+// Yardımcı fonksiyon: Rastgele seçim
+function rastgele_secim(kategori_adlari, haric_tutulan = null) {
+    let tum_isimler = [];
+    if (Array.isArray(kategori_adlari)) {
+        kategori_adlari.forEach(ad => {
+            tum_isimler.push(...veri_tabani[ad] || []);
+        });
+    } else { // Tek bir kategori adı ise
+        tum_isimler = veri_tabani[kategori_adlari] || [];
+    }
+
+    if (tum_isimler.length === 0) return "Bilinmeyen Biri";
+
+    let secilen;
+    do {
+        secilen = tum_isimler[Math.floor(Math.random() * tum_isimler.length)];
+    } while (haric_tutulan && secilen === haric_tutulan);
+    
+    return secilen;
+}
+
+// Oyun Adımı Yöneticisi
+function next_step(selection) {
+    const custom_input = document.getElementById('custom-input-' + oyun_state.step);
+    let secilen_deger;
+    let kategori_secimi;
+
+    if (selection === 'custom') {
+        secilen_deger = custom_input.value.trim();
+        if (!secilen_deger) {
+            alert("Lütfen bir değer girin.");
+            return;
+        }
+    } else {
+        kategori_secimi = selection;
+    }
+
+    // Seçime göre state güncelle
+    switch (oyun_state.step) {
+        case 1: // KİM?
+            oyun_state.kim = secilen_deger || rastgele_secim(kategori_secimi === 'Karışık' ? ['Rahmetli', 'Hayali', 'Yerli', 'Yabancı'] : kategori_secimi);
+            break;
+        case 2: // KİMİNLE?
+            oyun_state.kiminle = secilen_deger || rastgele_secim(kategori_secimi === 'Karışık' ? ['Rahmetli', 'Hayali', 'Yerli', 'Yabancı'] : kategori_secimi, oyun_state.kim);
+            break;
+        case 3: // NEREDE?
+            oyun_state.nerede = secilen_deger || rastgele_secim(kategori_secimi === 'Karışık' ? ['Nerede_Buyuk', 'Nerede_Kucuk'] : (kategori_secimi === 'Büyük Harfli' ? 'Nerede_Buyuk' : 'Nerede_Kucuk'));
+            break;
+        case 4: // NE YAPIYOR?
+            if (selection === 'custom') {
+                oyun_state.ne_yapiyor = secilen_deger;
+                oyun_state.ne_zaman = rastgele_secim(['Ne_Yapti_Zaman', 'Ne_Yapar_Zaman']); // Eylemi bilmediğimiz için karışık zaman atayalım
+            } else {
+                const zaman_anahtar = selection === 'Ne Yaptı?' ? 'Yapti' : 'Yapar';
+                oyun_state.ne_yapiyor = rastgele_secim('Ne_' + zaman_anahtar + '_Eylem');
+                oyun_state.ne_zaman = rastgele_secim('Ne_' + zaman_anahtar + '_Zaman');
+            }
+            break;
+    }
+
+    oyun_state.step++;
+    if (oyun_state.step > 4) {
+        show_result();
+    } else {
+        render_step();
+    }
+}
+
+// Ekranı çizen fonksiyon
+function render_step() {
+    const area = document.getElementById('game-area');
+    let html_content = '';
+    let question_data;
+
+    switch (oyun_state.step) {
+        case 1:
+            question_data = {
+                title: "❓ SORU 1: KİM?",
+                options: ['Rahmetli', 'Hayali', 'Yerli', 'Yabancı', 'Karışık']
+            };
+            break;
+        case 2:
+            question_data = {
+                title: "❓ SORU 2: KİMİNLE?",
+                subtitle: `(Kim: ${oyun_state.kim})`,
+                options: ['Rahmetli', 'Hayali', 'Yerli', 'Yabancı', 'Karışık']
+            };
+            break;
+        case 3:
+            question_data = {
+                title: "❓ SORU 3: NEREDE?",
+                subtitle: `(Kim: ${oyun_state.kim}, Kiminle: ${oyun_state.kiminle})`,
+                options: ['Büyük Harfli', 'Küçük Harfli', 'Karışık']
+            };
+            break;
+        case 4:
+            question_data = {
+                title: "❓ SORU 4: NE YAPIYOR? (Zamanı ve eylemi belirler)",
+                subtitle: `(Kim: ${oyun_state.kim}, Kiminle: ${oyun_state.kiminle}, Nerede: ${oyun_state.nerede})`,
+                options: ['Ne Yaptı?', 'Ne Yapar?']
+            };
+            break;
+        default:
+            return;
+    }
+
+    html_content += `
+        <div class="question-box">
+            <h2>${question_data.title}</h2>
+            ${question_data.subtitle ? `<p>Seçimleriniz: ${question_data.subtitle}</p>` : ''}
+            <div class="options-grid">
+                ${question_data.options.map(opt => 
+                    `<button onclick="next_step('${opt.replace(/'/g, "\\'")}')">${opt}</button>`
+                ).join('')}
+            </div>
+            <input type="text" id="custom-input-${oyun_state.step}" placeholder="Kendi verimi gireceğim (Yazın ve butona tıklayın)">
+            <button onclick="next_step('custom')">Veri Girişi ile İlerle</button>
+        </div>
+    `;
+    
+    area.innerHTML = html_content;
+}
+
+// Sonucu gösteren fonksiyon
+function show_result() {
+    document.getElementById('game-area').style.display = 'none';
+    const resultArea = document.getElementById('result-area');
+    
+    // Cümle Kurulumu: Kim + "ile" + Kiminle + Ne zaman adverb'ü + Nerede + Ne
+    const final_sentence = 
+        `${oyun_state.kim} ile ${oyun_state.kiminle} ${oyun_state.ne_zaman} ${oyun_state.nerede} ${oyun_state.ne_yapiyor}.`;
+
+    document.getElementById('result-text').textContent = final_sentence;
+    resultArea.style.display = 'block';
+}
+
+// Oyunu Başlat
+document.addEventListener('DOMContentLoaded', render_step);
+</script>
+
+</body>
+</html>
